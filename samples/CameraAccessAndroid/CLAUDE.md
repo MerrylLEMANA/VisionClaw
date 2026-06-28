@@ -89,10 +89,15 @@ journal) → v0.3 (vision + mode solveur) → v0.4 (wake-word promu défaut) →
    que dans `startCapture()`. INUTILISABLE pour Claude (qui ne capture jamais). Claude a
    donc son propre `playbackTrack` dans `ClaudeSessionViewModel`, en `USAGE_MEDIA`
    (speaker), pas `USAGE_VOICE_COMMUNICATION`.
-5. **fr-CA pas installé partout** : ni le STT (`AndroidSttEngine`) ni le TTS
-   (`AndroidTtsEngine`) ne doivent forcer `fr-CA` — le STT produit ERROR_NO_MATCH
-   silencieux et le TTS produit un WAV vide (ENOENT). Utiliser `fr-FR` avec repli sur
-   le locale système / `Locale.FRENCH`.
+5. **fr-CA pas installé partout — forcer `tts.language` produit un WAV vide** :
+   `tts.language = Locale.CANADA_FRENCH` sans vérifier la disponibilité cause un WAV vide
+   (ENOENT) si fr-CA n'est pas installé ; même problème côté STT (ERROR_NO_MATCH silencieux).
+   Toujours utiliser `tts.isLanguageAvailable()` avant d'assigner `tts.language`, avec repli
+   sur `Locale.FRANCE` puis `Locale.FRENCH`.
+   **Distinction importante** : sélectionner une voix fr-CA via `tts.voices` est sûr — le
+   filtre `KEY_FEATURE_NOT_INSTALLED` exclut les voix non installées, donc si aucune voix
+   fr-CA n'est présente sur l'appareil, le tri tombe automatiquement sur fr-FR. C'est
+   différent de forcer `tts.language` à l'aveugle. Voir `AndroidTtsEngine.selectBestFrenchVoice()`.
 6. **TTS : listener écrasé** : l'engine `TextToSpeech` est partagé et
    `setOnUtteranceProgressListener` écrase le précédent. Comme `ClaudeLiveService`
    synthétise phrase par phrase, le `onDone` doit reconstruire le fichier WAV depuis

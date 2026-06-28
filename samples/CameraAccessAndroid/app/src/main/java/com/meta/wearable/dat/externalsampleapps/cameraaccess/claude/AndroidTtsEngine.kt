@@ -85,16 +85,19 @@ class AndroidTtsEngine(
             null
         } ?: return
 
-        // Préférer fr-FR puis la qualité la plus élevée.
+        // fr-CA en priorité, fr-FR en repli, puis qualité la plus élevée.
+        // Si fr-CA n'est pas installé, le filtre KEY_FEATURE_NOT_INSTALLED l'exclut déjà —
+        // fr-FR sera sélectionné automatiquement (voir piège #5 CLAUDE.md).
         val best = frenchVoices
             .sortedWith(
-                compareByDescending<android.speech.tts.Voice> { it.locale.country == "FR" }
+                compareByDescending<android.speech.tts.Voice> { it.locale.country == "CA" }
+                    .thenByDescending { it.locale.country == "FR" }
                     .thenByDescending { it.quality }
             )
             .firstOrNull()
         if (best != null) {
             engine.voice = best
-            Log.d(TAG, "Voix TTS sélectionnée: ${best.name} (qualité ${best.quality})")
+            Log.d(TAG, "Voix TTS sélectionnée: ${best.name} locale=${best.locale} qualité=${best.quality}")
         }
     }
 
