@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -28,6 +29,8 @@ fun ControlsRow(
     isAIActive: Boolean,
     onToggleLive: () -> Unit,
     isLiveActive: Boolean,
+    onToggleClaude: () -> Unit = {},
+    isClaudeActive: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -62,6 +65,23 @@ fun ControlsRow(
             Icon(
                 imageVector = Icons.Default.AutoAwesome,
                 contentDescription = if (isAIActive) "Stop AI" else "Start AI",
+                tint = Color.White,
+            )
+        }
+
+        // Claude toggle button
+        Button(
+            onClick = onToggleClaude,
+            modifier = Modifier.aspectRatio(1f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isClaudeActive) Color(0xFFFF6600) else AppColor.DeepBlue,
+            ),
+            shape = CircleShape,
+            contentPadding = PaddingValues(0.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.SmartToy,
+                contentDescription = if (isClaudeActive) "Stop Claude" else "Start Claude",
                 tint = Color.White,
             )
         }

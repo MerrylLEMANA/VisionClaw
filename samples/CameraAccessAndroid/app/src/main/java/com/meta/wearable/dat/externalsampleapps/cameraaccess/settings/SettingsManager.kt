@@ -3,6 +3,7 @@ package com.meta.wearable.dat.externalsampleapps.cameraaccess.settings
 import android.content.Context
 import android.content.SharedPreferences
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.Secrets
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.ClaudeConfig
 
 object SettingsManager {
     private const val PREFS_NAME = "visionclaw_settings"
@@ -20,6 +21,18 @@ object SettingsManager {
     var geminiSystemPrompt: String
         get() = prefs.getString("geminiSystemPrompt", null) ?: DEFAULT_SYSTEM_PROMPT
         set(value) = prefs.edit().putString("geminiSystemPrompt", value).apply()
+
+    var claudeAPIKey: String
+        get() = prefs.getString("claudeAPIKey", null) ?: Secrets.claudeAPIKey
+        set(value) = prefs.edit().putString("claudeAPIKey", value).apply()
+
+    var claudeSystemPrompt: String
+        get() = prefs.getString("claudeSystemPrompt", null) ?: ClaudeConfig.DEFAULT_SYSTEM_PROMPT
+        set(value) = prefs.edit().putString("claudeSystemPrompt", value).apply()
+
+    var claudeModel: String
+        get() = prefs.getString("claudeModel", null) ?: ClaudeConfig.DEFAULT_MODEL
+        set(value) = prefs.edit().putString("claudeModel", value).apply()
 
     var openClawHost: String
         get() = prefs.getString("openClawHost", null) ?: Secrets.openClawHost

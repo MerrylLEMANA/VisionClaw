@@ -83,7 +83,31 @@ fun NonStreamScreen(
         modifier = modifier.fillMaxSize().background(Color.Black).padding(all = 24.dp),
         contentAlignment = Alignment.Center,
     ) {
-      // Top bar: settings + disconnect
+      Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
+        Icon(
+            painter = painterResource(id = R.drawable.camera_access_icon),
+            contentDescription = stringResource(R.string.camera_access_icon_description),
+            tint = Color.White,
+            modifier = Modifier.size(80.dp * LocalDensity.current.density),
+        )
+        Text(
+            text = stringResource(R.string.non_stream_screen_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = Color.White,
+        )
+        Text(
+            text = stringResource(R.string.non_stream_screen_description),
+            textAlign = TextAlign.Center,
+            color = Color.White,
+        )
+      }
+
+      // Top bar: settings + disconnect — apres la Column centrale pour etre au-dessus
       Row(
           modifier = Modifier.align(Alignment.TopEnd).systemBarsPadding(),
           horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -129,30 +153,6 @@ fun NonStreamScreen(
             )
           }
         }
-      }
-
-      Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
-        Icon(
-            painter = painterResource(id = R.drawable.camera_access_icon),
-            contentDescription = stringResource(R.string.camera_access_icon_description),
-            tint = Color.White,
-            modifier = Modifier.size(80.dp * LocalDensity.current.density),
-        )
-        Text(
-            text = stringResource(R.string.non_stream_screen_title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = Color.White,
-        )
-        Text(
-            text = stringResource(R.string.non_stream_screen_description),
-            textAlign = TextAlign.Center,
-            color = Color.White,
-        )
       }
 
       Column(

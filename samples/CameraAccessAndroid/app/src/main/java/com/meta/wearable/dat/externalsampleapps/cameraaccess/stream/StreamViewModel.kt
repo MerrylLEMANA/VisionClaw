@@ -33,6 +33,7 @@ import com.meta.wearable.dat.camera.types.VideoFrame
 import com.meta.wearable.dat.camera.types.VideoQuality
 import com.meta.wearable.dat.core.Wearables
 import com.meta.wearable.dat.core.selectors.DeviceSelector
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.ClaudeSessionViewModel
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.gemini.GeminiSessionViewModel
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.phone.PhoneCameraManager
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.wearables.WearablesViewModel
@@ -54,6 +55,8 @@ class StreamViewModel(
     private val wearablesViewModel: WearablesViewModel,
 ) : AndroidViewModel(application) {
 
+  enum class LlmProvider { GEMINI, CLAUDE }
+
   companion object {
     private const val TAG = "StreamViewModel"
     private val INITIAL_STATE = StreamUiState()
@@ -69,7 +72,9 @@ class StreamViewModel(
   private var stateJob: Job? = null
 
   // VisionClaw additions
+  var activeProvider: LlmProvider = LlmProvider.GEMINI
   var geminiViewModel: GeminiSessionViewModel? = null
+  var claudeViewModel: ClaudeSessionViewModel? = null
   var webrtcViewModel: WebRTCSessionViewModel? = null
   private var phoneCameraManager: PhoneCameraManager? = null
 
@@ -110,9 +115,11 @@ class StreamViewModel(
 
     manager.onFrameCaptured = { bitmap ->
       _uiState.update { it.copy(videoFrame = bitmap) }
-      // Forward to Gemini (throttled inside the VM)
-      geminiViewModel?.sendVideoFrameIfThrottled(bitmap)
-      // Forward to WebRTC (every frame)
+      when (activeProvider) {
+        LlmProvider.GEMINI -> geminiViewModel?.sendVideoFrameIfThrottled(bitmap)
+        LlmProvider.CLAUDE -> claudeViewModel?.sendVideoFrameIfThrottled(bitmap)
+      }
+      // Forward to WebRTC (every frame, provider-independent)
       webrtcViewModel?.pushVideoFrame(bitmap)
     }
 
@@ -237,9 +244,11 @@ class StreamViewModel(
     val bitmap = BitmapFactory.decodeByteArray(out, 0, out.size)
     _uiState.update { it.copy(videoFrame = bitmap) }
 
-    // Forward to Gemini (throttled inside the VM)
-    geminiViewModel?.sendVideoFrameIfThrottled(bitmap)
-    // Forward to WebRTC (every frame)
+    when (activeProvider) {
+      LlmProvider.GEMINI -> geminiViewModel?.sendVideoFrameIfThrottled(bitmap)
+      LlmProvider.CLAUDE -> claudeViewModel?.sendVideoFrameIfThrottled(bitmap)
+    }
+    // Forward to WebRTC (every frame, provider-independent)
     webrtcViewModel?.pushVideoFrame(bitmap)
   }
 

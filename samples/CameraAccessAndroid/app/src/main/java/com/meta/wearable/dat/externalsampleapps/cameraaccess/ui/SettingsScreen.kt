@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.ClaudeConfig
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.settings.SettingsManager
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,9 +52,13 @@ fun SettingsScreen(
     var webrtcSignalingURL by remember { mutableStateOf(SettingsManager.webrtcSignalingURL) }
     var videoStreamingEnabled by remember { mutableStateOf(SettingsManager.videoStreamingEnabled) }
     var proactiveNotificationsEnabled by remember { mutableStateOf(SettingsManager.proactiveNotificationsEnabled) }
+    var claudeAPIKey by remember { mutableStateOf(SettingsManager.claudeAPIKey) }
+    var claudeModel by remember { mutableStateOf(SettingsManager.claudeModel) }
     var showResetDialog by remember { mutableStateOf(false) }
 
     fun save() {
+        SettingsManager.claudeAPIKey = claudeAPIKey.trim()
+        SettingsManager.claudeModel = claudeModel
         SettingsManager.geminiAPIKey = geminiAPIKey.trim()
         SettingsManager.geminiSystemPrompt = systemPrompt.trim()
         SettingsManager.openClawHost = openClawHost.trim()
@@ -66,6 +71,8 @@ fun SettingsScreen(
     }
 
     fun reload() {
+        claudeAPIKey = SettingsManager.claudeAPIKey
+        claudeModel = SettingsManager.claudeModel
         geminiAPIKey = SettingsManager.geminiAPIKey
         systemPrompt = SettingsManager.geminiSystemPrompt
         openClawHost = SettingsManager.openClawHost
@@ -115,6 +122,35 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().height(200.dp),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
             )
+
+            // Claude section
+            SectionHeader("Claude API")
+            MonoTextField(
+                value = claudeAPIKey,
+                onValueChange = { claudeAPIKey = it },
+                label = "API Key",
+                placeholder = "sk-ant-...",
+            )
+            Text("Model", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    "Haiku" to ClaudeConfig.MODEL_HAIKU,
+                    "Sonnet" to ClaudeConfig.MODEL_SONNET,
+                    "Opus" to ClaudeConfig.MODEL_OPUS,
+                ).forEach { (label, model) ->
+                    TextButton(
+                        onClick = { claudeModel = model },
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = if (claudeModel == model)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    ) {
+                        Text(label)
+                    }
+                }
+            }
 
             // OpenClaw section
             SectionHeader("OpenClaw")

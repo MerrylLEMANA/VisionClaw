@@ -31,10 +31,56 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.ClaudeConnectionState
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.ClaudeUiState
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.gemini.GeminiConnectionState
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.gemini.GeminiUiState
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.openclaw.OpenClawConnectionState
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.openclaw.ToolCallStatus
+
+@Composable
+fun ClaudeOverlay(
+    uiState: ClaudeUiState,
+    modifier: Modifier = Modifier,
+) {
+    val isThinking = uiState.connectionState is ClaudeConnectionState.Thinking
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StatusPill(
+                label = "Claude",
+                color = when (uiState.connectionState) {
+                    is ClaudeConnectionState.Ready -> Color(0xFF4CAF50)
+                    is ClaudeConnectionState.Thinking -> Color(0xFFFF9800)
+                    is ClaudeConnectionState.Error -> Color(0xFFF44336)
+                    is ClaudeConnectionState.Disconnected -> Color(0xFF9E9E9E)
+                },
+            )
+            if (isThinking) {
+                Text(
+                    text = "Reflechit...",
+                    color = Color(0xFFFF9800),
+                    fontSize = 12.sp,
+                )
+            }
+        }
+        if (uiState.userTranscript.isNotEmpty() || uiState.aiTranscript.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            TranscriptView(
+                userTranscript = uiState.userTranscript,
+                aiTranscript = uiState.aiTranscript,
+            )
+        }
+        if (uiState.isModelSpeaking) {
+            Spacer(modifier = Modifier.height(4.dp))
+            SpeakingIndicator()
+        }
+    }
+}
 
 @Composable
 fun GeminiOverlay(

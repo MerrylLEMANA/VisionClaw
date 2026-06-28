@@ -41,6 +41,8 @@ class PhoneCameraManager(private val context: Context) {
                     val bitmap = imageProxyToBitmap(imageProxy)
                     if (bitmap != null) {
                         onFrameCaptured?.invoke(bitmap)
+                    } else {
+                        Log.w(TAG, "imageProxyToBitmap returned null (${imageProxy.width}x${imageProxy.height})")
                     }
                     imageProxy.close()
                 }

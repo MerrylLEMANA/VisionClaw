@@ -32,6 +32,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,6 +48,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.R
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.AndroidSttEngine
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.AndroidTtsEngine
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.ClaudeLiveService
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.wearables.WearablesViewModel
 
 @Composable
@@ -54,20 +61,16 @@ fun HomeScreen(
   val scrollState = rememberScrollState()
   val activity = LocalActivity.current
   val context = LocalContext.current
+  var claudeTestResult by remember { mutableStateOf("") }
+  var claudeTestLoading by remember { mutableStateOf(false) }
+  val claudeService = remember {
+    ClaudeLiveService(
+      sttEngine = AndroidSttEngine(context),
+      ttsEngine = AndroidTtsEngine(context),
+    )
+  }
 
   Box(modifier = modifier.fillMaxSize()) {
-    // Settings gear (top-right)
-    Box(modifier = Modifier.align(Alignment.TopEnd).systemBarsPadding().padding(8.dp)) {
-      IconButton(onClick = { viewModel.showSettings() }) {
-        Icon(
-            imageVector = Icons.Default.Settings,
-            contentDescription = "Settings",
-            tint = Color.Gray,
-            modifier = Modifier.size(28.dp),
-        )
-      }
-    }
-
     Column(
         modifier =
             Modifier
@@ -116,6 +119,7 @@ fun HomeScreen(
           verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         // App Registration Button
+
         Text(
             text = stringResource(R.string.home_redirect_message),
             color = Color.Gray,
@@ -134,6 +138,67 @@ fun HomeScreen(
         SwitchButton(
             label = "Start on Phone",
             onClick = { viewModel.navigateToPhoneMode() },
+        )
+
+        // Bouton de test Claude (debug)
+        SwitchButton(
+            label = if (claudeTestLoading) "En attente de Claude..." else "Test Claude",
+            enabled = !claudeTestLoading,
+            onClick = {
+                claudeTestResult = ""
+                claudeTestLoading = true
+                val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+                fun toast(msg: String) = mainHandler.post {
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                }
+                fun showResult(text: String) = mainHandler.post {
+                    claudeTestResult = text
+                    claudeTestLoading = false
+                    Toast.makeText(context, text, Toast.LENGTH_LONG).show()
+                }
+                toast("1. Bouton clique")
+                claudeService.onOutputTranscription = { response: String ->
+                    toast("4. Reponse recue")
+                    showResult(response)
+                }
+                claudeService.onDisconnected = { err: String? ->
+                    showResult("Erreur reseau : ${err ?: "déconnexion inattendue"}")
+                }
+                try {
+                    claudeService.connect { success: Boolean ->
+                        toast("2. connect() = $success")
+                        if (success) {
+                            toast("3. Envoi a Claude...")
+                            claudeService.sendTextMessage("dis bonjour")
+                        } else {
+                            showResult("Erreur : clé API Claude non configurée")
+                        }
+                    }
+                } catch (e: Exception) {
+                    showResult("Exception : ${e.message}")
+                }
+            },
+        )
+
+        if (claudeTestResult.isNotEmpty()) {
+            Text(
+                text = claudeTestResult,
+                color = Color.DarkGray,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
+        }
+      }
+    }
+
+    // Settings gear (top-right) — dernier enfant du Box pour etre au-dessus de la Column
+    Box(modifier = Modifier.align(Alignment.TopEnd).systemBarsPadding().padding(8.dp)) {
+      IconButton(onClick = { viewModel.showSettings() }) {
+        Icon(
+            imageVector = Icons.Default.Settings,
+            contentDescription = "Settings",
+            tint = Color.Gray,
+            modifier = Modifier.size(28.dp),
         )
       }
     }

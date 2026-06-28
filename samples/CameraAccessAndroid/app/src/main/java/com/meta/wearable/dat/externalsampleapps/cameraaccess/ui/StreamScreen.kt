@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meta.wearable.dat.camera.types.StreamSessionState
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.R
+import com.meta.wearable.dat.externalsampleapps.cameraaccess.claude.ClaudeSessionViewModel
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.gemini.GeminiSessionViewModel
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.stream.StreamViewModel
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.stream.StreamingMode
@@ -56,10 +57,12 @@ fun StreamScreen(
                 ),
         ),
     geminiViewModel: GeminiSessionViewModel = viewModel(),
+    claudeViewModel: ClaudeSessionViewModel = viewModel(),
     webrtcViewModel: WebRTCSessionViewModel = viewModel(),
 ) {
     val streamUiState by streamViewModel.uiState.collectAsStateWithLifecycle()
     val geminiUiState by geminiViewModel.uiState.collectAsStateWithLifecycle()
+    val claudeUiState by claudeViewModel.uiState.collectAsStateWithLifecycle()
     val webrtcUiState by webrtcViewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -67,6 +70,12 @@ fun StreamScreen(
     // Wire Gemini VM to Stream VM for frame forwarding
     LaunchedEffect(geminiViewModel) {
         streamViewModel.geminiViewModel = geminiViewModel
+    }
+
+    // Wire Claude VM to Stream VM + démarrer wake-word
+    LaunchedEffect(claudeViewModel) {
+        streamViewModel.claudeViewModel = claudeViewModel
+        claudeViewModel.startWakeWord(context)
     }
 
     // Wire WebRTC VM to Stream VM for frame forwarding
@@ -91,6 +100,10 @@ fun StreamScreen(
             if (geminiUiState.isGeminiActive) {
                 geminiViewModel.stopSession()
             }
+            if (claudeUiState.isClaudeActive) {
+                claudeViewModel.stopSession()
+            }
+            claudeViewModel.stopWakeWord()
             if (webrtcUiState.isActive) {
                 webrtcViewModel.stopSession()
             }
@@ -102,6 +115,12 @@ fun StreamScreen(
         geminiUiState.errorMessage?.let { msg ->
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
             geminiViewModel.clearError()
+        }
+    }
+    LaunchedEffect(claudeUiState.errorMessage) {
+        claudeUiState.errorMessage?.let { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            claudeViewModel.clearError()
         }
     }
     LaunchedEffect(webrtcUiState.errorMessage) {
@@ -137,6 +156,12 @@ fun StreamScreen(
                     GeminiOverlay(uiState = geminiUiState)
                 }
 
+                // Claude overlay
+                if (claudeUiState.isClaudeActive) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ClaudeOverlay(uiState = claudeUiState)
+                }
+
                 // WebRTC overlay
                 if (webrtcUiState.isActive) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -148,11 +173,22 @@ fun StreamScreen(
             ControlsRow(
                 onStopStream = {
                     if (geminiUiState.isGeminiActive) geminiViewModel.stopSession()
+                    if (claudeUiState.isClaudeActive) claudeViewModel.stopSession()
                     if (webrtcUiState.isActive) webrtcViewModel.stopSession()
                     streamViewModel.stopStream()
                     wearablesViewModel.navigateToDeviceSelection()
                 },
-                onCapturePhoto = { streamViewModel.capturePhoto() },
+                onCapturePhoto = {
+                    if (claudeUiState.isClaudeActive) {
+                        // Utilise la frame courante directement, sans ouvrir le dialog de partage
+                        streamUiState.videoFrame?.let { frame ->
+                            claudeViewModel.attachPhoto(frame)
+                            Toast.makeText(context, "Photo attachée — parlez maintenant", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        streamViewModel.capturePhoto()
+                    }
+                },
                 onToggleAI = {
                     if (geminiUiState.isGeminiActive) {
                         geminiViewModel.stopSession()
@@ -161,6 +197,14 @@ fun StreamScreen(
                     }
                 },
                 isAIActive = geminiUiState.isGeminiActive,
+                onToggleClaude = {
+                    if (claudeUiState.isClaudeActive) {
+                        claudeViewModel.stopSession()
+                    } else {
+                        claudeViewModel.startSession(context)
+                    }
+                },
+                isClaudeActive = claudeUiState.isClaudeActive,
                 onToggleLive = {
                     if (webrtcUiState.isActive) {
                         webrtcViewModel.stopSession()
