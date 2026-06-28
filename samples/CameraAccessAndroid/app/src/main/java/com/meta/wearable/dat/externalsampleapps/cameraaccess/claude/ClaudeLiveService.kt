@@ -24,14 +24,16 @@ import org.json.JSONObject
  *
  * Différence structurelle majeure : Gemini Live est un flux temps réel bidirectionnel
  * (un seul WebSocket ouvert). Claude fonctionne par tours requête/réponse en streaming SSE
- * sur l'API Messages REST. Donc ce service simule la même API externe (mêmes états,
- * mêmes callbacks) mais orchestre en interne : STT -> accumulation -> appel Claude -> TTS.
+ * sur l'API Messages REST. Ce service orchestre en interne : STT -> accumulation -> appel
+ * Claude -> TTS, en exposant les mêmes états et callbacks que GeminiLiveService.
  *
- * Ce fichier est un SQUELETTE fonctionnel, pas une version finale :
- *   - sttEngine et ttsEngine sont injectés (voir SttTtsEngines.kt) -> à implémenter concrètement.
- *   - Le tool-use Claude (function calling, ex. OpenClaw / calculatrice du "mode solveur",
- *     voir spec §6.5) n'est pas encore branché -> TODO marqué plus bas.
- *   - Pas de gestion d'image multi-frame (spec §6.6) -> une seule image par tour pour l'instant.
+ * Fonctionnalités actives :
+ *   - AndroidSttEngine / AndroidTtsEngine injectés (SttTtsEngines.kt)
+ *   - Mode solveur : outil code_execution_20250825 (Python server-side Anthropic)
+ *   - Vision : une photo attachée par tour via attachPhoto() / sendVideoFrame()
+ *   - TTS sérialisé phrase par phrase (anti-DeadObjectException)
+ *   - Echo éliminé : pause/resume SpeechRecognizer pendant TTS
+ *   - Barge-in via interrupt()
  */
 
 sealed class ClaudeConnectionState {

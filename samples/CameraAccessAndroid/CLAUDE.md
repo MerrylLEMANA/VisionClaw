@@ -71,8 +71,9 @@ journal) → v0.3 (vision + mode solveur) → v0.4 (wake-word promu défaut) →
 - [x] Mode solveur validé : code_execution_20250825, calcul Python server-side, résultat numérique réel. ✓
 - [x] Qualité TTS : voix fr-fr-x-frc-local (qualité HIGH), vitesse 0.75, sanitizeForTts() complet. ✓
 - [x] Echo éliminé : pause/resume SpeechRecognizer pendant TTS. ✓
-- [ ] Compte Meta développeur créé + Application ID réel obtenu.
-- [ ] Lunettes en main, premier test matériel réel + Spike 0.
+- [x] Wake-word opérationnel (JARVIS/Claude via SpeechRecognizer — solution temporaire téléphone). ✓
+- [x] Application ID Meta réel enregistré dans manifest (1211030581168329). ✓
+- [ ] Lunettes en main (arrivée lundi 2026-06-30) + Spike 0 premier test matériel.
 
 ## Pièges déjà identifiés (ne pas re-découvrir en debug)
 1. **Conflit micro** : `SpeechRecognizer` et `AudioManager` (AudioRecord de Gemini) ne

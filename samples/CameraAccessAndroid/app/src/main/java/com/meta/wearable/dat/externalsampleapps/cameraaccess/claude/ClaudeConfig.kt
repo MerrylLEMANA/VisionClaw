@@ -3,11 +3,8 @@ package com.meta.wearable.dat.externalsampleapps.cameraaccess.claude
 import com.meta.wearable.dat.externalsampleapps.cameraaccess.settings.SettingsManager
 
 /**
- * Miroir de GeminiConfig.kt, pour Claude.
- *
- * Différence clé avec Gemini Live : Claude n'a pas d'API audio native bidirectionnelle.
- * On parle donc à l'API Messages (REST, streaming SSE), pas à un WebSocket temps réel.
- * Le pipeline complet est : audio -> STT -> texte -> Claude (streaming) -> texte -> TTS -> audio.
+ * Constantes et configuration Claude. Le pipeline est : STT -> API Messages (SSE) -> TTS.
+ * Clé API lue depuis SettingsManager (SharedPreferences, jamais en dur).
  */
 object ClaudeConfig {
 

@@ -1,20 +1,13 @@
 package com.meta.wearable.dat.externalsampleapps.cameraaccess.claude
 
 /**
- * Gemini Live parle nativement audio <-> audio. Claude ne le fait pas (au moment de l'écriture) :
- * on doit donc transcrire la voix en texte (STT), envoyer le texte à Claude, puis synthétiser
- * sa réponse texte en audio (TTS). Ces deux interfaces isolent ce choix pour qu'on puisse changer
- * de moteur (Android natif <-> cloud) sans toucher à ClaudeLiveService.
+ * Interfaces STT/TTS injectées dans ClaudeLiveService.
  *
- * TODO (à brancher au moment de l'intégration, voir spec §10 — Pile technique) :
- *   - SttEngine  : implémentation par défaut avec android.speech.SpeechRecognizer
- *                  (streaming partiel via setRecognitionListener) ou un STT cloud.
- *   - TtsEngine  : implémentation par défaut avec android.speech.tts.TextToSpeech
- *                  (offline/gratuit) ou ElevenLabs Flash (latence plus faible, payant).
+ * Implémentations actuelles : AndroidSttEngine (SpeechRecognizer) + AndroidTtsEngine (TextToSpeech).
+ * Alternative future (spec §10) : STT cloud ou ElevenLabs Flash pour latence réduite.
  *
- * Important (spec §7/§8) : le levier de latence le plus rentable est le streaming TTS phrase
- * par phrase (time-to-first-audio), pas d'attendre la réponse complète de Claude avant de
- * commencer à synthétiser. synthesizeStreaming() est conçu pour ça.
+ * Le TTS est appelé phrase par phrase (time-to-first-audio) — ne pas attendre la réponse
+ * complète de Claude avant de commencer à synthétiser.
  */
 interface SttEngine {
     /** Démarre l'écoute. onPartialResult est appelé en continu (transcription provisoire). */
