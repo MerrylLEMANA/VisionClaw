@@ -60,7 +60,7 @@ class AndroidTtsEngine(
                     Log.w(TAG, "fr-FR indisponible (code $res), repli sur Locale.FRENCH")
                 }
                 selectBestFrenchVoice()
-                tts?.setSpeechRate(0.75f) // plus lent = plus intelligible à l'oral
+                tts?.setSpeechRate(0.70f) // plus lent = plus intelligible à l'oral
             } else {
                 Log.e(TAG, "Échec d'initialisation de TextToSpeech")
             }
@@ -85,12 +85,20 @@ class AndroidTtsEngine(
             null
         } ?: return
 
-        // fr-CA en priorité, fr-FR en repli, puis qualité la plus élevée.
-        // Si fr-CA n'est pas installé, le filtre KEY_FEATURE_NOT_INSTALLED l'exclut déjà —
-        // fr-FR sera sélectionné automatiquement (voir piège #5 CLAUDE.md).
+        // Log toutes les voix disponibles pour faciliter le choix (genre, qualité).
+        frenchVoices.sortedByDescending { it.quality }.forEach {
+            Log.d(TAG, "Voix disponible: ${it.name} locale=${it.locale} qualité=${it.quality} features=${it.features}")
+        }
+
+        // Noms de voix Google TTS connus pour être féminins sur Android (fr-CA et fr-FR).
+        // Priorité : voix féminine fr-CA > féminine fr-FR > meilleure qualité disponible.
+        val femaleNamePatterns = listOf("caa", "cac", "frc", "fra", "fre")
         val best = frenchVoices
             .sortedWith(
-                compareByDescending<android.speech.tts.Voice> { it.locale.country == "CA" }
+                compareByDescending<android.speech.tts.Voice> { v ->
+                    femaleNamePatterns.any { v.name.contains(it) }
+                }
+                    .thenByDescending { it.locale.country == "CA" }
                     .thenByDescending { it.locale.country == "FR" }
                     .thenByDescending { it.quality }
             )
